@@ -111,3 +111,13 @@ in x16emu with the virtual modem against the hub's link server with an in-memory
 folder trees in both directions, binary files, Overwrite/Skip, new folders, rename/move, duplicate
 and delete of folder trees on both sides, marked rows into a folder, navigation. `SHOT=1` also saves
 a screenshot (`build/fmtest/shot.png`).
+
+## License
+
+Copyright (C) 2026 hermeslohin
+
+X16 Files is free software: you can redistribute it and/or modify it under the terms of the GNU General
+Public License as published by the Free Software Foundation, either version 3 of the License, or (at
+your option) any later version. It is distributed in the hope that it will be useful, but WITHOUT ANY
+WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+See [LICENSE](LICENSE) for the full text of the GNU General Public License v3.
