@@ -5,6 +5,7 @@
 %import strings
 %import vid
 %import ui
+%import theme
 %import sd
 %import cloud
 %import pane
@@ -21,6 +22,9 @@ fm {
     const ubyte B_QUIT = 8
 
     ubyte[8] bx = [1, 10, 19, 31, 40, 49, 62, 0]
+    ; Sunset pills: Copy pink, Move orange, New folder yellow, Refresh teal, the rest violet
+    ubyte[8] bface = [vid.C_RED, vid.C_ORANGE, vid.C_GRAY, vid.C_GRAY, vid.C_GRAY, vid.C_YELLOW, vid.C_CYAN, 0]
+    ubyte[8] bfg = [vid.C_BLACK, vid.C_BLACK, vid.C_WHITE, vid.C_WHITE, vid.C_WHITE, vid.C_BLACK, vid.C_BLACK, 0]
     uword[8] blab_r = [iso:"Copy >", iso:"Move >", iso:"Duplicate", iso:"Rename", iso:"Delete", iso:"New folder", iso:"Refresh", 0]
     uword[8] blab_l = [iso:"< Copy", iso:"< Move", iso:"Duplicate", iso:"Rename", iso:"Delete", iso:"New folder", iso:"Refresh", 0]
     uword[8] tips = [iso:"Copy to the other side (F5; or drag there)", iso:"Move to the other side (F6)",
@@ -50,12 +54,14 @@ fm {
             }
         }
         cloud.quit()
+        theme.off()
         vid.gfx_off()
     }
 
     sub init() {
         vid.load_fonts()
         vid.gfx_init()
+        theme.init()
         draw_frame()
         ui.status(iso:"Starting...")
         sd.init()
@@ -72,21 +78,22 @@ fm {
 
     ; ---------------- drawing ----------------
     sub draw_frame() {
-        vid.fill(0, 0, 80, ui.C_WHITE, ui.C_BLUE)
-        ui.bold(1, 0, iso:"X16 FILES", ui.C_YELLOW, ui.C_BLUE)
-        ui.put(12, 0, iso:"SD card <-> ownCloud", ui.C_WHITE, ui.C_BLUE)
-        ui.put(76, 0, iso:"[X]", ui.C_WHITE, ui.C_RED)
+        theme.stripes(0, 0, 80)
+        ui.bold(1, 0, iso:" X16 FILES ", ui.C_YELLOW, ui.C_BLACK)
+        ui.put(29, 0, iso:" SD card <-> ownCloud ", ui.C_WHITE, ui.C_BLACK)
+        ui.bold(76, 0, iso:"[X]", ui.C_BLACK, ui.C_RED)
         draw_toolbar()
     }
 
     sub draw_toolbar() {
-        vid.fill(0, 1, 80, 0, ui.C_LGRAY)
+        vid.fill(0, 1, 80, 0, ui.C_DGRAY)
         ubyte i
+        uword lab
         for i in 0 to 6 {
+            lab = blab_l[i]
             if pane.active == 0
-                ui.button(bx[i], 1, blab_r[i])
-            else
-                ui.button(bx[i], 1, blab_l[i])
+                lab = blab_r[i]
+            theme.pill(bx[i], 1, lab, bfg[i], bface[i], ui.C_DGRAY)
         }
     }
 
@@ -258,8 +265,10 @@ fm {
                 if not cloud.avail
                     cloud.init()
                 reload()
-                if cloud.avail and pane.ok[1]
+                if cloud.avail and pane.ok[1] {
                     ui.status(iso:"Refreshed")
+                    theme.cheer()
+                }
                 else
                     ui.status(&cloud.err)
             }

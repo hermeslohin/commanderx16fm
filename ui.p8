@@ -4,6 +4,7 @@
 %import syslib
 %import conv
 %import vid
+%import theme
 
 ui {
     %option ignore_unused
@@ -52,6 +53,7 @@ ui {
 
     sub event() -> ubyte {
         sys.waitvsync()
+        theme.tick()
         if script != 0 and @(script) != 0 {
             key = @(script)
             script++
@@ -113,14 +115,19 @@ ui {
 
     ; dialog frame with a title bar
     sub frame(ubyte x, ubyte y, ubyte w, ubyte h, uword title, ubyte titlebg) {
+        ; Sunset: warnings keep a pink title bar, everything else is lavender
+        ubyte fg = C_WHITE
+        if titlebg != C_RED {
+            titlebg = vid.C_PURPLE
+            fg = C_BLACK
+        }
         box(x, y, w, h)
-        vid.fill(x, y, w, C_WHITE, titlebg)
-        bold(x + 2, y, title, C_WHITE, titlebg)
+        vid.fill(x, y, w, fg, titlebg)
+        bold(x + 2, y, title, fg, titlebg)
     }
 
     sub button(ubyte x, ubyte y, uword label) {
-        vid.fill(x, y, slen(label) + 2, 0, C_WHITE)
-        put(x + 1, y, label, 0, C_WHITE)
+        theme.pill(x, y, label, C_BLACK, C_YELLOW, C_LGRAY)
     }
 
     sub hit(ubyte x, ubyte y, uword label) -> bool {
@@ -165,8 +172,9 @@ ui {
     }
 
     sub draw_status() {
-        field(0, STATUS_ROW, iso:" ", 1, 0, C_LGRAY)
-        field(1, STATUS_ROW, &stmsg, 79, 0, C_LGRAY)
+        ; Quill (theme sprite) sits in columns 0-1
+        vid.fill(0, STATUS_ROW, 3, C_WHITE, C_BLACK)
+        field(3, STATUS_ROW, &stmsg, 77, C_WHITE, C_BLACK)
     }
 
     ; ---------------- dialogs ----------------

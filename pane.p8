@@ -165,14 +165,14 @@ pane {
 
     ; ---------------- drawing ----------------
     sub draw_title(ubyte p) {
-        ubyte bg = ui.C_DGRAY
+        ubyte bg = vid.C_PURPLE
         if p == active
-            bg = ui.C_BLUE
-        vid.fill(x0(p), TITLE_ROW, W, ui.C_WHITE, bg)
+            bg = ui.C_RED
+        vid.fill(x0(p), TITLE_ROW, W, ui.C_BLACK, bg)
         if p == 0
-            ui.bold(x0(p) + 1, TITLE_ROW, iso:"X16 SD card", ui.C_WHITE, bg)
+            ui.bold(x0(p) + 1, TITLE_ROW, iso:"X16 SD card", ui.C_BLACK, bg)
         else
-            ui.bold(x0(p) + 1, TITLE_ROW, iso:"ownCloud", ui.C_WHITE, bg)
+            ui.bold(x0(p) + 1, TITLE_ROW, iso:"ownCloud", ui.C_BLACK, bg)
         ; path line: the end of the path if it is too long
         uword s
         ubyte[80] pb
@@ -191,9 +191,9 @@ pane {
             s += l - (W - 2)
         vid.fill(x0(p), PATH_ROW, W, 0, ui.C_LGRAY)
         ui.field(x0(p) + 1, PATH_ROW, s, W - 2, 0, ui.C_LGRAY)
-        vid.fill(x0(p), HEAD_ROW, W, ui.C_DGRAY, ui.C_LGRAY)
-        ui.put(x0(p) + 2, HEAD_ROW, iso:"Name", ui.C_DGRAY, ui.C_LGRAY)
-        ui.put(x0(p) + 34, HEAD_ROW, iso:"Size", ui.C_DGRAY, ui.C_LGRAY)
+        vid.fill(x0(p), HEAD_ROW, W, ui.C_BLACK, ui.C_YELLOW)
+        ui.put(x0(p) + 2, HEAD_ROW, iso:"Name", ui.C_BLACK, ui.C_YELLOW)
+        ui.put(x0(p) + 34, HEAD_ROW, iso:"Size", ui.C_BLACK, ui.C_YELLOW)
     }
 
     sub thumb(ubyte p) -> ubyte {
@@ -225,11 +225,11 @@ pane {
             if bad
                 fg = ui.C_GRAY
             if mk
-                fg = ui.C_RED
+                fg = vid.C_BROWN
             if r == sel[p] {
                 if p == active {
-                    bg = ui.C_BLUE
-                    fg = ui.C_WHITE
+                    bg = ui.C_RED
+                    fg = ui.C_BLACK
                 } else
                     bg = ui.C_LGRAY
             }
@@ -254,15 +254,15 @@ pane {
         for i in 0 to W - 2
             vid.r_col[i] = k
         ; scroll bar
-        ubyte sb = (ui.C_LGRAY << 4) | ui.C_BLACK
+        ubyte sb = (ui.C_BLACK << 4) | ui.C_BLACK
         if vr == 0 {
             vid.r_ch[W - 1] = iso:'^'
-            sb = (ui.C_WHITE << 4) | ui.C_BLACK
+            sb = (ui.C_BLACK << 4) | ui.C_RED
         } else if vr == ROWS - 1 {
             vid.r_ch[W - 1] = iso:'v'
-            sb = (ui.C_WHITE << 4) | ui.C_BLACK
+            sb = (ui.C_BLACK << 4) | ui.C_RED
         } else if vr == thumb(p) and rows(p) > ROWS
-            sb = (ui.C_DGRAY << 4) | ui.C_DGRAY
+            sb = (ui.C_RED << 4) | ui.C_RED
         vid.r_col[W - 1] = sb
         vid.render_run(ROW0 + vr, x0(p), W)
     }

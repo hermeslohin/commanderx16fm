@@ -7,6 +7,7 @@
 ; Existing destinations are never replaced silently: Overwrite / All / Skip / Cancel.
 
 %import ui
+%import theme
 %import sd
 %import cloud
 %import pane
@@ -525,6 +526,7 @@ ops {
         } else {
             sys.memcopy(verb, &msg, ui.slen(verb) + 1)
             ui.status(&msg)
+            theme.cheer()
         }
         fm.reload()
     }

@@ -21,10 +21,15 @@ unavailable. Needs a mouse and 512 KB of RAM.
 
 Row 0 title + close box - row 1 toolbar - two panes (title, folder path, column header, 23 rows with a
 scroll bar, item count) - status bar (tool tips, what the selected row is, progress, results).
-The active pane has a blue title; the toolbar's arrows point from it to the other pane.
+The active pane has a pink title; the toolbar's arrows point from it to the other pane.
+
+The colours are the X16 Office **Sunset Arcade** theme (`theme.p8`, the same file in every app of the
+suite): striped title bar, pill buttons, cream lists on a dark violet desk, and **Quill**, a little
+pencil (hardware sprite 1) at the left end of the status bar who blinks now and then and hops when an
+operation went well.
 
 Rows: `..` (when not in the top folder), then folders (blue, bold, `/`), then files, each sorted by
-name. Sizes: SD card files in KB (CMDR-DOS reports 254-byte blocks, so it is approximate), ownCloud
+name. Marked rows have a `*` and are rust-coloured. Sizes: SD card files in KB (CMDR-DOS reports 254-byte blocks, so it is approximate), ownCloud
 files exact below 10000 bytes. The status bar shows the selected file's size and, for ownCloud, its
 modification date. Files that can't be transferred (name not representable, over 1 MiB) are grey.
 
@@ -80,7 +85,8 @@ hub drops an idle session) and wipes it when you quit.
   OPEN/READ + SAVE/WRITE/COMMIT with `conv 3` for transfers. The folder ops are in
   `lib/x16link/lk_fs.p8`.
 * Memory: listings in banked RAM (SD pane banks 1-4, scratch listing 5-8, operation items 9-10,
-  folder queue 11-14); X16Link in banks 60/61; golden RAM `$0400-$07FF` is left to X16Link.
+  folder queue 11-14); X16Link in banks 60/61; theme glyphs in font slot 3 (codes 240-244) and Quill
+  at VRAM $18000 (sprite 1); golden RAM `$0400-$07FF` is left to X16Link.
   Folder trees are walked with a queue (Prog8 subroutines are not re-entrant).
 
 | File | |
@@ -92,7 +98,8 @@ hub drops an idle session) and wipes it when you quit.
 | `sd.p8` | SD card: bounded directory reader, sorted listing, DOS commands |
 | `cloud.p8` | hub session (key, reconnect), ownCloud listing, transfer progress |
 | `ui.p8` | events, text fields, buttons, dialogs |
-| `vid.p8` | X16 Write's 80x30 bitmap text renderer |
+| `vid.p8` | X16 Write's 80x30 bitmap text renderer (with the Sunset palette) |
+| `theme.p8` | the suite's Sunset Arcade theme: palette roles, title stripes, desk stars, pill buttons, Quill (shared, keep identical in every app) |
 | `lib/x16link/` | vendored X16Link client library (from x16-office-hub, `tools/vendor_x16link.sh`) |
 
 ## Tests
