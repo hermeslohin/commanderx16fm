@@ -13,6 +13,7 @@ Build: `make` (Prog8 12.3.x as `~/prog8c.jar` or `PROG8C=...`, 64tass, Java 11+)
 | `X16FM.PRG` | the program |
 | `X16LINK.BIN` `X16DOCS.BIN` | X16Link libraries (banks 60/61), for ownCloud |
 | `X16LINK.KEY` | this X16's hub key (the same file X16 Write and X16 Sheets use) |
+| `X16THEME1.BIN` .. `X16THEME6.BIN` | the X16 Office themes (`tools/mkthemes.py`, the same files for every app) |
 
 Without the X16Link files or the key the SD card side still works; the ownCloud pane shows why it is
 unavailable. Needs a mouse and 512 KB of RAM.
@@ -23,10 +24,16 @@ Row 0 title + close box - row 1 toolbar - two panes (title, folder path, column 
 scroll bar, item count) - status bar (tool tips, what the selected row is, progress, results).
 The active pane has a pink title; the toolbar's arrows point from it to the other pane.
 
-The colours are the X16 Office **Sunset Arcade** theme (`theme.p8`, the same file in every app of the
-suite): striped title bar, pill buttons, cream lists on a dark violet desk, and **Quill**, a little
-pencil (hardware sprite 1) at the left end of the status bar who blinks now and then and hops when an
-operation went well.
+The colours come from the X16 Office **themes** (`theme.p8`, the same file in every app of the suite):
+striped title bar, pill buttons, cream lists, and **Quill**, a little pencil (hardware sprite 1) at the
+left end of the status bar who blinks now and then and hops when an operation went well.
+**Click Quill for the next theme** (Sunset Arcade, Crayon Desk, Comic Book, Beach Hut, Chalkboard,
+Winter Cabin, then Sunset Arcade again). The choice is saved in `X16THEME.CFG` (one byte), which X16
+Write, X16 Sheets, X16 Files and X16 Calendar all read at start, so a theme picked in one app is used by
+all of them. The theme files and `X16THEME.CFG` live in the folder X16 Files was started from (the SD
+card folder with `X16FM.PRG`); X16 Files goes back there for a moment when Quill is clicked, whatever
+folder the SD pane shows. Without theme files X16 Files uses the built-in Sunset Arcade colours and
+Quill stays hidden.
 
 Rows: `..` (when not in the top folder), then folders (blue, bold, `/`), then files, each sorted by
 name. Marked rows have a `*` and are rust-coloured. Sizes: SD card files in KB (CMDR-DOS reports 254-byte blocks, so it is approximate), ownCloud
@@ -85,8 +92,11 @@ hub drops an idle session) and wipes it when you quit.
   OPEN/READ + SAVE/WRITE/COMMIT with `conv 3` for transfers. The folder ops are in
   `lib/x16link/lk_fs.p8`.
 * Memory: listings in banked RAM (SD pane banks 1-4, scratch listing 5-8, operation items 9-10,
-  folder queue 11-14); X16Link in banks 60/61; theme glyphs in font slot 3 (codes 240-244) and Quill
-  at VRAM $18000 (sprite 1); golden RAM `$0400-$07FF` is left to X16Link.
+  folder queue 11-14); X16Link in banks 60/61; theme glyphs in font slot 3 (codes 240-255) and Quill
+  at VRAM $18000 (sprite 1); a theme file is read through bank 5 (`vid.TBANK`, idle outside
+  operations); golden RAM `$0400-$07FF` is left to X16Link. The screen's colours are theme roles
+  (`theme.rl`); folder blue, marked rust, grey and error red are palette colours, the same in every
+  theme.
   Folder trees are walked with a queue (Prog8 subroutines are not re-entrant).
 
 | File | |
@@ -98,8 +108,9 @@ hub drops an idle session) and wipes it when you quit.
 | `sd.p8` | SD card: bounded directory reader, sorted listing, DOS commands |
 | `cloud.p8` | hub session (key, reconnect), ownCloud listing, transfer progress |
 | `ui.p8` | events, text fields, buttons, dialogs |
-| `vid.p8` | X16 Write's 80x30 bitmap text renderer (with the Sunset palette) |
-| `theme.p8` | the suite's Sunset Arcade theme: palette roles, title stripes, desk stars, pill buttons, Quill (shared, keep identical in every app) |
+| `vid.p8` | X16 Write's 80x30 bitmap text renderer (with the built-in Sunset palette and glyphs) |
+| `theme.p8` | the suite's themes: reads `X16THEME.CFG` / `X16THEMEn.BIN`, colour roles, title stripes, pill buttons, Quill (shared, keep identical in every app) |
+| `tools/mkthemes.py` | writes `X16THEME1.BIN` .. `X16THEME6.BIN` (shared, keep identical in every app) |
 | `lib/x16link/` | vendored X16Link client library (from x16-office-hub, `tools/vendor_x16link.sh`) |
 
 ## Tests
@@ -111,6 +122,13 @@ in x16emu with the virtual modem against the hub's link server with an in-memory
 folder trees in both directions, binary files, Overwrite/Skip, new folders, rename/move, duplicate
 and delete of folder trees on both sides, marked rows into a folder, navigation. `SHOT=1` also saves
 a screenshot (`build/fmtest/shot.png`).
+
+`make themetest` (`test/run_themetest.sh`, x16emu on the host file system, no hub needed): without
+`X16THEME.CFG` the first theme, Quill through all six and back to the first while the SD pane is in a
+subfolder (the pane and the DOS current folder stay there, `X16THEME.CFG` lands in the start folder
+only), `X16THEME.CFG` brings the chosen theme back at start, a missing start folder changes nothing.
+One screenshot per theme: `build/themetest/snap-1.png` .. `snap-6.png` (`PY=` a python3 with Pillow
+to split them).
 
 ## License
 

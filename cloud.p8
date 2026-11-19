@@ -142,6 +142,6 @@ cloud {
         } else if p >= 10
             pct[1] = iso:'0' + p / 10
         pct[2] = iso:'0' + p % 10
-        vid.text(74, ui.STATUS_ROW, pct, vid.S_BOLD, ui.C_YELLOW, ui.C_BLACK)
+        vid.text(74, ui.STATUS_ROW, pct, vid.S_BOLD, theme.rl[theme.R_STAT_HI], ui.bg(theme.R_STAT))
     }
 }

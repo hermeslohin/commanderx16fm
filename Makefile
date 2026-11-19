@@ -5,14 +5,15 @@ PROG8C ?= java -jar $(HOME)/prog8c.jar
 export PROG8C
 EMU ?= x16emu
 
-.PHONY: all sd run run-modem test clean
+.PHONY: all sd run run-modem test themetest clean
 all:
 	./build.sh
 
 sd:
 	./build.sh $(SD)
 
-# plain run on the host file system (SD card side only: ownCloud needs the virtual modem)
+# plain run on the host file system (SD card side only: ownCloud needs the virtual modem); build/run
+# also gets the theme files, so clicking Quill works
 run: all
 	mkdir -p build/run && ./build.sh build/run > /dev/null
 	cd build/run && $(EMU) -scale 2 -prg X16FM.PRG -run
@@ -28,6 +29,10 @@ run-modem: all
 # end to end: FAT32 SD image + emulator + the real hub link server (needs ../x16-office-hub); SHOT=1 adds a screenshot
 test:
 	test/run_fmtest.sh
+
+# themes on the host file system, one screenshot per theme (build/themetest/snap-*.png)
+themetest:
+	test/run_themetest.sh
 
 clean:
 	rm -rf build

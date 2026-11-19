@@ -20,11 +20,11 @@ fm {
     const ubyte B_MKDIR = 6
     const ubyte B_REFRESH = 7
     const ubyte B_QUIT = 8
+    const ubyte B_QUILL = 9                 ; the theme mascot, row 29 columns 0-1
 
     ubyte[8] bx = [1, 10, 19, 31, 40, 49, 62, 0]
-    ; Sunset pills: Copy pink, Move orange, New folder yellow, Refresh teal, the rest violet
-    ubyte[8] bface = [vid.C_RED, vid.C_ORANGE, vid.C_GRAY, vid.C_GRAY, vid.C_GRAY, vid.C_YELLOW, vid.C_CYAN, 0]
-    ubyte[8] bfg = [vid.C_BLACK, vid.C_BLACK, vid.C_WHITE, vid.C_WHITE, vid.C_WHITE, vid.C_BLACK, vid.C_BLACK, 0]
+    ; button colours (theme roles): Copy accent 1, Move accent 2, New folder 4, Refresh 3, the rest plain
+    ubyte[8] brole = [theme.R_BTN_1, theme.R_BTN_2, theme.R_BTN, theme.R_BTN, theme.R_BTN, theme.R_BTN_4, theme.R_BTN_3, 0]
     uword[8] blab_r = [iso:"Copy >", iso:"Move >", iso:"Duplicate", iso:"Rename", iso:"Delete", iso:"New folder", iso:"Refresh", 0]
     uword[8] blab_l = [iso:"< Copy", iso:"< Move", iso:"Duplicate", iso:"Rename", iso:"Delete", iso:"New folder", iso:"Refresh", 0]
     uword[8] tips = [iso:"Copy to the other side (F5; or drag there)", iso:"Move to the other side (F6)",
@@ -32,6 +32,7 @@ fm {
                      iso:"Delete (F8 / Del)", iso:"Make a new folder here (F7)", iso:"Read both sides again (F1)", 0]
 
     bool running = true
+    ubyte[64] home                          ; the folder we were started in: the theme files are there
     ubyte last_tip = 255
     ; mouse
     bool rdown
@@ -65,6 +66,7 @@ fm {
         draw_frame()
         ui.status(iso:"Starting...")
         sd.init()
+        sys.memcopy(&sd.path, &home, 64)
         cloud.init()
         pane.active = 0
         pane.enter_list(0)
@@ -79,21 +81,22 @@ fm {
     ; ---------------- drawing ----------------
     sub draw_frame() {
         theme.stripes(0, 0, 80)
-        ui.bold(1, 0, iso:" X16 FILES ", ui.C_YELLOW, ui.C_BLACK)
-        ui.put(29, 0, iso:" SD card <-> ownCloud ", ui.C_WHITE, ui.C_BLACK)
-        ui.bold(76, 0, iso:"[X]", ui.C_BLACK, ui.C_RED)
+        ui.rtext(1, 0, iso:" X16 FILES ", vid.S_BOLD, theme.R_TTL_NAME)
+        ui.rtext(29, 0, iso:" SD card <-> ownCloud ", 0, theme.R_TTL_TXT)
+        ui.rtext(76, 0, iso:"[X]", vid.S_BOLD, theme.R_QUIT)
         draw_toolbar()
     }
 
     sub draw_toolbar() {
-        vid.fill(0, 1, 80, 0, ui.C_DGRAY)
+        ubyte tb = theme.rl[theme.R_TOOL]
+        vid.fill(0, 1, 80, 0, tb)
         ubyte i
         uword lab
         for i in 0 to 6 {
             lab = blab_l[i]
             if pane.active == 0
                 lab = blab_r[i]
-            theme.pill(bx[i], 1, lab, bfg[i], bface[i], ui.C_DGRAY)
+            theme.pill(bx[i], 1, lab, ui.fg(brole[i]), ui.bg(brole[i]), tb)
         }
     }
 
@@ -116,6 +119,8 @@ fm {
     sub button_at(ubyte cx, ubyte cy) -> ubyte {
         if cy == 0 and cx >= 76 and cx < 79
             return B_QUIT
+        if theme.on_quill(cx, cy)
+            return B_QUILL
         if cy != 1
             return 0
         ubyte i
@@ -273,7 +278,21 @@ fm {
                     ui.status(&cloud.err)
             }
             B_QUIT -> running = false
+            B_QUILL -> next_theme()
         }
+    }
+
+    ; Quill: the next theme, for every X16 Office app. The theme files and X16THEME.CFG are in the
+    ; folder we were started in: go there for a moment, then back to the SD pane's folder.
+    sub next_theme() {
+        bool ok = sd.cd_abs(&home) and theme.next()
+        sd.restore()
+        if ok {
+            redraw()
+            ui.status(&theme.msg)
+            theme.cheer()
+        } else
+            ui.status(iso:"No theme files (X16THEME1.BIN ...) in the start folder")
     }
 
     sub toggle_mark(ubyte p) {
@@ -419,6 +438,8 @@ fm {
                 last_tip = t
                 if t >= B_COPY and t <= B_REFRESH
                     ui.status(tips[t - 1])
+                else if t == B_QUILL and theme.cur != 0
+                    ui.status(&theme.tip)
             }
         }
     }

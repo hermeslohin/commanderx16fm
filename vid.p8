@@ -7,7 +7,7 @@
 vid {
     %option ignore_unused
 
-    ; --- palette indexes (Sunset Arcade colours, see theme.p8; written in gfx_init) ---
+    ; --- palette indexes (Sunset Arcade colours until a theme file is read, see theme.p8) ---
     const ubyte C_BLACK = 0
     const ubyte C_WHITE = 1
     const ubyte C_RED = 2
@@ -33,6 +33,10 @@ vid {
     const ubyte NFONTS = 3
 
     const uword FONT_VRAM = $6000       ; bank 1, $16000 .. 3 fonts of 2 KB
+    ; theme.p8 reads a theme file into this buffer (512 bytes): sd.p8's scratch listing bank, only
+    ; used during copy / move / delete of folders, so idle at start and when Quill is clicked
+    const ubyte TBANK = 5
+    const uword TBUF = $a000
 
     ; cell composition arrays: filled by the caller, drawn by render_run()
     ubyte[80] r_ch
@@ -42,7 +46,7 @@ vid {
     uword c_gl = memory("c_gl", 640, 0)
     uword pairs = memory("pairs", 320, 0)
 
-    ; Sunset Arcade palette (theme.p8; the original colours are theme.doc_lo/doc_hi)
+    ; Sunset Arcade palette, the built-in theme (a theme file replaces it in VRAM; theme.p8)
     ubyte[16] pal_lo = [$13,$ed,$48,$dd,$8f,$b4,$6e,$d4,$93,$52,$9b,$26,$59,$fa,$cf,$bf]
     ubyte[16] pal_hi = [$2,$f,$f,$4,$9,$4,$3,$f,$f,$a,$f,$3,$6,$b,$8,$c]
 
@@ -78,8 +82,26 @@ vid {
             }
             sys.clear_irqd()
         }
+        ; font slot 3, codes 240..255: the theme's glyphs. Until a theme file brings its own, the
+        ; Sunset ones Files uses: title stripe (240) and pill caps (243, 244); the rest blank
+        ubyte i
+        sys.set_irqd()
+        cx16.vaddr(1, FONT_VRAM + 3 * 2048 + 240 * 8, 0, 1)
+        for i in 0 to 127 {
+            slot = 0
+            when i >> 3 {
+                0 -> slot = sunset_gl[i]
+                3, 4 -> slot = sunset_gl[i - 16]
+            }
+            cx16.VERA_DATA0 = slot
+        }
+        sys.clear_irqd()
         cbm.CHROUT($0f)         ; keyboard / console in ISO mode
     }
+    ; stripe, left cap, right cap (the same as tools/mkthemes.py's)
+    ubyte[24] sunset_gl = [$ff, $ff, $ff, $dd, $aa, $44, 0, 0,
+                           $0f, $3f, $7f, $7f, $7f, $7f, $3f, $0f,
+                           $f0, $fc, $fe, $fe, $fe, $fe, $fc, $f0]
 
     sub gfx_init() {
         ubyte i
@@ -102,7 +124,7 @@ vid {
         cx16.VERA_L0_VSCROLL_L = 0
         cx16.VERA_L0_VSCROLL_H = 0
         cx16.VERA_DC_VIDEO = (cx16.VERA_DC_VIDEO & $07) | $50       ; layer0 + sprites, layer1 off
-        cx16.VERA_DC_BORDER = C_DGRAY
+        cx16.VERA_DC_BORDER = C_BLACK
         clear_screen(C_BLACK)
         cx16.mouse_config(1, 80, 30)
     }

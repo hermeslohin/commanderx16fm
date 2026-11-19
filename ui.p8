@@ -101,6 +101,30 @@ ui {
         vid.text(col, row, s, vid.S_BOLD, fg, bg)
     }
 
+    ; ---------------- theme roles (theme.rl: pairs are (bg << 4) | fg) ----------------
+    sub fg(ubyte role) -> ubyte {
+        return theme.rl[role] & 15
+    }
+
+    sub bg(ubyte role) -> ubyte {
+        return theme.rl[role] >> 4
+    }
+
+    ; text in the colours of a pair role
+    sub rtext(ubyte col, ubyte row, uword s, ubyte sty, ubyte role) {
+        vid.text(col, row, s, sty, fg(role), bg(role))
+    }
+
+    ; n cells in the colours of a pair role
+    sub rfill(ubyte col, ubyte row, ubyte n, ubyte role) {
+        vid.fill(col, row, n, 0, bg(role))
+    }
+
+    ; exactly n cells of s in the colours of a pair role
+    sub rfield(ubyte col, ubyte row, uword s, ubyte n, ubyte role) {
+        field(col, row, s, n, fg(role), bg(role))
+    }
+
     sub num(ubyte col, ubyte row, uword n, ubyte fg, ubyte bg) {
         vid.text(col, row, conv.str_uw(n), 0, fg, bg)
     }
@@ -108,26 +132,24 @@ ui {
     sub box(ubyte x, ubyte y, ubyte w, ubyte h) {
         ubyte r
         for r in y to y + h - 1
-            vid.fill(x, r, w, 0, C_LGRAY)
-        vid.fill(x, y, w, 0, C_BLACK)
-        vid.fill(x, y + h - 1, w, 0, C_BLACK)
+            rfill(x, r, w, theme.R_DLG)
+        vid.fill(x, y, w, 0, theme.rl[theme.R_DLG_EDGE])
+        vid.fill(x, y + h - 1, w, 0, theme.rl[theme.R_DLG_EDGE])
     }
 
     ; dialog frame with a title bar
+    ; titlebg C_RED: a warning title bar (R_DLG_WARN), anything else the normal one (R_DLG_TTL)
     sub frame(ubyte x, ubyte y, ubyte w, ubyte h, uword title, ubyte titlebg) {
-        ; Sunset: warnings keep a pink title bar, everything else is lavender
-        ubyte fg = C_WHITE
-        if titlebg != C_RED {
-            titlebg = vid.C_PURPLE
-            fg = C_BLACK
-        }
+        ubyte role = theme.R_DLG_TTL
+        if titlebg == C_RED
+            role = theme.R_DLG_WARN
         box(x, y, w, h)
-        vid.fill(x, y, w, fg, titlebg)
-        bold(x + 2, y, title, fg, titlebg)
+        rfill(x, y, w, role)
+        rtext(x + 2, y, title, vid.S_BOLD, role)
     }
 
     sub button(ubyte x, ubyte y, uword label) {
-        theme.pill(x, y, label, C_BLACK, C_YELLOW, C_LGRAY)
+        theme.pill(x, y, label, fg(theme.R_DLG_BTN), bg(theme.R_DLG_BTN), bg(theme.R_DLG))
     }
 
     sub hit(ubyte x, ubyte y, uword label) -> bool {
@@ -173,8 +195,8 @@ ui {
 
     sub draw_status() {
         ; Quill (theme sprite) sits in columns 0-1
-        vid.fill(0, STATUS_ROW, 3, C_WHITE, C_BLACK)
-        field(3, STATUS_ROW, &stmsg, 77, C_WHITE, C_BLACK)
+        rfill(0, STATUS_ROW, 3, theme.R_STAT)
+        rfield(3, STATUS_ROW, &stmsg, 77, theme.R_STAT)
     }
 
     ; ---------------- dialogs ----------------
@@ -186,8 +208,8 @@ ui {
         ubyte y = 10
         ubyte n = slen(buf)
         frame(DX, y, DW, 8, title, C_BLUE)
-        put(DX + 2, y + 2, label, 0, C_LGRAY)
-        put(DX + 2, y + 5, iso:"Enter = OK   Esc = Cancel", C_DGRAY, C_LGRAY)
+        rtext(DX + 2, y + 2, label, 0, theme.R_DLG)
+        put(DX + 2, y + 5, iso:"Enter = OK   Esc = Cancel", theme.rl[theme.R_BAR_DIM], bg(theme.R_DLG))
         button(DX + 36, y + 6, iso:" OK ")
         button(DX + 45, y + 6, iso:"Cancel")
         bool dirty = true
@@ -199,14 +221,15 @@ ui {
                 if n > 55
                     first = n - 55
                 ubyte i
+                ubyte k = theme.rl[theme.R_FIELD]
                 for i in 0 to 55 {
                     vid.r_sty[i] = 0
-                    vid.r_col[i] = C_WHITE << 4
+                    vid.r_col[i] = k
                     vid.r_ch[i] = 32
                     if first + i < n
                         vid.r_ch[i] = @(buf + first + i)
                 }
-                vid.r_col[n - first] = C_WHITE
+                vid.r_col[n - first] = (k << 4) | (k >> 4)         ; the cursor: inverse
                 vid.render_run(y + 3, DX + 2, 56)
             }
             when event() {
@@ -247,9 +270,9 @@ ui {
         lab[2] = c
         lab[3] = d
         frame(DX, y, DW, 7, title, titlebg)
-        field(DX + 2, y + 2, line1, DW - 4, 0, C_LGRAY)
+        rfield(DX + 2, y + 2, line1, DW - 4, theme.R_DLG)
         if line2 != 0
-            field(DX + 2, y + 3, line2, DW - 4, 0, C_LGRAY)
+            rfield(DX + 2, y + 3, line2, DW - 4, theme.R_DLG)
         ubyte x = DX + 2
         for i in 0 to 3 {
             lx[i] = x

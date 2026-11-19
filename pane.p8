@@ -3,6 +3,7 @@
 ; (right click / Space) for operations on several entries at once.
 
 %import ui
+%import theme
 %import sd
 %import cloud
 
@@ -165,14 +166,14 @@ pane {
 
     ; ---------------- drawing ----------------
     sub draw_title(ubyte p) {
-        ubyte bg = vid.C_PURPLE
+        ubyte role = theme.R_HEAD_OFF
         if p == active
-            bg = ui.C_RED
-        vid.fill(x0(p), TITLE_ROW, W, ui.C_BLACK, bg)
+            role = theme.R_HEAD_ON
+        ui.rfill(x0(p), TITLE_ROW, W, role)
         if p == 0
-            ui.bold(x0(p) + 1, TITLE_ROW, iso:"X16 SD card", ui.C_BLACK, bg)
+            ui.rtext(x0(p) + 1, TITLE_ROW, iso:"X16 SD card", vid.S_BOLD, role)
         else
-            ui.bold(x0(p) + 1, TITLE_ROW, iso:"ownCloud", ui.C_BLACK, bg)
+            ui.rtext(x0(p) + 1, TITLE_ROW, iso:"ownCloud", vid.S_BOLD, role)
         ; path line: the end of the path if it is too long
         uword s
         ubyte[80] pb
@@ -189,11 +190,11 @@ pane {
         ubyte l = ui.slen(s)
         if l > W - 2
             s += l - (W - 2)
-        vid.fill(x0(p), PATH_ROW, W, 0, ui.C_LGRAY)
-        ui.field(x0(p) + 1, PATH_ROW, s, W - 2, 0, ui.C_LGRAY)
-        vid.fill(x0(p), HEAD_ROW, W, ui.C_BLACK, ui.C_YELLOW)
-        ui.put(x0(p) + 2, HEAD_ROW, iso:"Name", ui.C_BLACK, ui.C_YELLOW)
-        ui.put(x0(p) + 34, HEAD_ROW, iso:"Size", ui.C_BLACK, ui.C_YELLOW)
+        ui.rfill(x0(p), PATH_ROW, W, theme.R_BAR)
+        ui.rfield(x0(p) + 1, PATH_ROW, s, W - 2, theme.R_BAR)
+        ui.rfill(x0(p), HEAD_ROW, W, theme.R_TAPE)
+        ui.rtext(x0(p) + 2, HEAD_ROW, iso:"Name", 0, theme.R_TAPE)
+        ui.rtext(x0(p) + 34, HEAD_ROW, iso:"Size", 0, theme.R_TAPE)
     }
 
     sub thumb(ubyte p) -> ubyte {
@@ -208,8 +209,8 @@ pane {
 
     sub draw_row(ubyte p, ubyte vr) {
         uword r = top[p] + vr
-        ubyte fg = ui.C_BLACK
-        ubyte bg = ui.C_WHITE
+        ubyte fg = ui.fg(theme.R_PAPER)
+        ubyte bg = ui.bg(theme.R_PAPER)
         ubyte sty = 0
         ubyte i
         for i in 0 to W - 1 {
@@ -228,10 +229,10 @@ pane {
                 fg = vid.C_BROWN
             if r == sel[p] {
                 if p == active {
-                    bg = ui.C_RED
-                    fg = ui.C_BLACK
+                    bg = ui.bg(theme.R_SEL)
+                    fg = ui.fg(theme.R_SEL)
                 } else
-                    bg = ui.C_LGRAY
+                    bg = ui.bg(theme.R_SEL_DIM)
             }
             if mk {
                 vid.r_ch[0] = iso:'*'
@@ -254,15 +255,13 @@ pane {
         for i in 0 to W - 2
             vid.r_col[i] = k
         ; scroll bar
-        ubyte sb = (ui.C_BLACK << 4) | ui.C_BLACK
-        if vr == 0 {
+        ubyte sb = theme.rl[theme.R_SCROLL]         ; track (bg) and arrows (fg)
+        if vr == 0
             vid.r_ch[W - 1] = iso:'^'
-            sb = (ui.C_BLACK << 4) | ui.C_RED
-        } else if vr == ROWS - 1 {
+        else if vr == ROWS - 1
             vid.r_ch[W - 1] = iso:'v'
-            sb = (ui.C_BLACK << 4) | ui.C_RED
-        } else if vr == thumb(p) and rows(p) > ROWS
-            sb = (ui.C_RED << 4) | ui.C_RED
+        else if vr == thumb(p) and rows(p) > ROWS
+            sb = theme.rl[theme.R_THUMB] << 4
         vid.r_col[W - 1] = sb
         vid.render_run(ROW0 + vr, x0(p), W)
     }
@@ -276,13 +275,14 @@ pane {
 
     ubyte[48] fb
     sub draw_foot(ubyte p) {
-        vid.fill(x0(p), FOOT_ROW, W, 0, ui.C_LGRAY)
+        ubyte bg = ui.bg(theme.R_FOOT)
+        vid.fill(x0(p), FOOT_ROW, W, 0, bg)
         if p == 1 and not ok[1] {
-            ui.field(x0(p) + 1, FOOT_ROW, &cloud.err, W - 2, ui.C_RED, ui.C_LGRAY)
+            ui.field(x0(p) + 1, FOOT_ROW, &cloud.err, W - 2, ui.C_RED, bg)
             return
         }
         if p == 0 and not ok[0] {
-            ui.field(x0(p) + 1, FOOT_ROW, &sd.st, W - 2, ui.C_RED, ui.C_LGRAY)
+            ui.field(x0(p) + 1, FOOT_ROW, &sd.st, W - 2, ui.C_RED, bg)
             return
         }
         fb[0] = 0
@@ -293,7 +293,7 @@ pane {
             fadd(conv.str_uw(nmarked[p]))
             fadd(iso:" marked")
         }
-        ui.field(x0(p) + 1, FOOT_ROW, &fb, W - 2, ui.C_DGRAY, ui.C_LGRAY)
+        ui.rfield(x0(p) + 1, FOOT_ROW, &fb, W - 2, theme.R_FOOT)
     }
 
     sub fadd(uword s) {
